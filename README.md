@@ -58,7 +58,7 @@ uv --version
 
 Once installed, you can use uv to manage your Python environment:
 
-```bash
+```bashuv
 # Create a virtual environment
 uv venv
 
