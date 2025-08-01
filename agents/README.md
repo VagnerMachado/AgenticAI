@@ -43,6 +43,7 @@ Then please keep in mind for Crew:
 
 ### Super useful resources
 
+Learn about the crewai: https://docs.crewai.com/
 - The course [resources](https://edwarddonner.com/2025/04/21/the-complete-agentic-ai-engineering-course/) with videos
 - Many essential guides in the [guides](guides/01_intro.ipynb) section
 - The [troubleshooting](setup/troubleshooting.ipynb) notebook
