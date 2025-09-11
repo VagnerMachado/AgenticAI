@@ -25,4 +25,52 @@ Useful Ollama commands (run these in the terminal, or with an exclamation mark i
 `ollama pull <model_name>` downloads a model locally  
 `ollama ls` lists all the models you've downloaded  
 `ollama rm <model_name>` deletes the specified model from your downloads
+
+---
+
+The error indicates that `uv` is not installed or not in your PATH. Here's how to install and use `uv`:
+
+## Install uv
+
+**Option 1: Using pip (recommended)**
+```bash
+pip install uv
+```
+
+**Option 2: Using PowerShell (Windows)**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Option 3: Using curl (if available)**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+## After installation, restart your terminal/PowerShell
+
+Close and reopen your terminal, then verify installation:
+```bash
+uv --version
+```
+
+## Using uv in your project
+
+Once installed, you can use uv to manage your Python environment:
+
+```bash
+# Create a virtual environment
+uv venv
+
+# Activate it (Windows)
+.venv\Scripts\activate
+
+# Install packages
+uv pip install openai-agents sendgrid python-dotenv pydantic
+
+# Or install from requirements.txt
+uv pip install -r requirements.txt
+```
+
+The `uv` tool is a fast Python package installer and resolver, similar to pip but much faster. It's particularly useful for managing dependencies in Python projects.
  
