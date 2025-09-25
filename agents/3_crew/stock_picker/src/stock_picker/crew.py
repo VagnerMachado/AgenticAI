@@ -3,6 +3,7 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from pydantic import BaseModel, Field
 from typing import List
+import os
 from .tools.push_tool import PushNotificationTool
 from crewai.memory import LongTermMemory, ShortTermMemory, EntityMemory
 from crewai.memory.storage.rag_storage import RAGStorage
@@ -73,8 +74,6 @@ class StockPicker():
         )
     
 
-
-
     @crew
     def crew(self) -> Crew:
         """Creates the StockPicker crew"""
@@ -83,43 +82,124 @@ class StockPicker():
             config=self.agents_config['manager'],
             allow_delegation=True
         )
-            
+
+        # candidate embedder configs to try (covers different crewai/openai API shapes)
+        candidate_embedder_configs = [            
+            # include API key explicitly so chromadb/openai embedding sees it
+            {"provider": "openai", "model": "text-embedding-3-small", "config": {"api_key": os.getenv("OPENAI_API_KEY")}},
+            {"provider": "openai", "model_name": "text-embedding-3-small", "config": {"api_key": os.getenv("OPENAI_API_KEY")}},
+            {"provider": "openai", "deployment": "text-embedding-3-small", "config": {"api_key": os.getenv("OPENAI_API_KEY")}},
+            {"provider": "openai", "config": {"model": "text-embedding-3-small", "api_key": os.getenv("OPENAI_API_KEY")}},
+            {"provider": "openai", "config": {"api_key": os.getenv("OPENAI_API_KEY")}},  # minimal
+         ]
+
+        # attempt to build RAGStorage with each candidate until one works
+        short_term_storage = None
+        entity_storage = None
+        last_error = None
+        for cfg in candidate_embedder_configs:
+            try:
+                short_term_storage = ShortTermMemory(
+                    storage=RAGStorage(
+                        embedder_config=cfg,
+                        type="short_term",
+                        path="./memory/"
+                    )
+                )
+                entity_storage = EntityMemory(
+                    storage=RAGStorage(
+                        embedder_config=cfg,
+                        type="short_term",
+                        path="./memory/"
+                    )
+                )
+                last_error = None
+                break
+            except TypeError as e:
+                # record and try next config
+                last_error = e
+
+        if last_error is not None:
+            # failed to create a compatible embedder config — fall back to no memory
+            print("Warning: failed to construct RAGStorage with tried embedder configs:", last_error)
+            # disable memory to allow the crew to run
+            return Crew(
+                agents=self.agents,
+                tasks=self.tasks,
+                process=Process.hierarchical,
+                verbose=True,
+                manager_agent=manager,
+                memory=False,
+                long_term_memory=LongTermMemory(
+                    storage=LTMSQLiteStorage(
+                        db_path="./memory/long_term_memory_storage.db"
+                    )
+                ),
+            )
+
+        # success: return crew with working short-term and entity memory
         return Crew(
             agents=self.agents,
-            tasks=self.tasks, 
+            tasks=self.tasks,
             process=Process.hierarchical,
             verbose=True,
             manager_agent=manager,
             memory=True,
-            # Long-term memory for persistent storage across sessions
-            long_term_memory = LongTermMemory(
+            long_term_memory=LongTermMemory(
                 storage=LTMSQLiteStorage(
                     db_path="./memory/long_term_memory_storage.db"
                 )
             ),
-            # Short-term memory for current context using RAG
-            short_term_memory = ShortTermMemory(
-                storage = RAGStorage(
-                        embedder_config={
-                            "provider": "openai",
-                            "config": {
-                                "model": 'text-embedding-3-small'
-                            }
-                        },
-                        type="short_term",
-                        path="./memory/"
-                    )
-                ),            # Entity memory for tracking key information about entities
-            entity_memory = EntityMemory(
-                storage=RAGStorage(
-                    embedder_config={
-                        "provider": "openai",
-                        "config": {
-                            "model": 'text-embedding-3-small'
-                        }
-                    },
-                    type="short_term",
-                    path="./memory/"
-                )
-            ),
+            short_term_memory=short_term_storage,
+            entity_memory=entity_storage,
         )
+    
+    # The original simpler version without the robust embedder config handling
+    # @crew
+    # def crew(self) -> Crew:
+    #     """Creates the StockPicker crew"""
+
+    #     manager = Agent(
+    #         config=self.agents_config['manager'],
+    #         allow_delegation=True
+    #     )
+            
+    #     return Crew(
+    #         agents=self.agents,
+    #         tasks=self.tasks, 
+    #         process=Process.hierarchical,
+    #         verbose=True,
+    #         manager_agent=manager,
+    #         memory=True,
+    #         # Long-term memory for persistent storage across sessions
+    #         long_term_memory = LongTermMemory(
+    #             storage=LTMSQLiteStorage(
+    #                 db_path="./memory/long_term_memory_storage.db"
+    #             )
+    #         ),
+    #         # Short-term memory for current context using RAG
+    #         short_term_memory = ShortTermMemory(
+    #             storage = RAGStorage(
+    #                     embedder_config={
+    #                         "provider": "openai",
+    #                         "config": {
+    #                             "model": 'text-embedding-3-small'
+    #                         }
+    #                     },
+    #                     type="short_term",
+    #                     path="./memory/"
+    #                 )
+    #             ),            # Entity memory for tracking key information about entities
+    #         entity_memory = EntityMemory(
+    #             storage=RAGStorage(
+    #                 embedder_config={
+    #                     "provider": "openai",
+    #                     "config": {
+    #                         "model": 'text-embedding-3-small'
+    #                     }
+    #                 },
+    #                 type="short_term",
+    #                 path="./memory/"
+    #             )
+    #         ),
+    #     )
