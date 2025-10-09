@@ -65,6 +65,9 @@ uv venv
 # Activate it (Windows)
 .venv\Scripts\activate
 
+#If the above fails due to execution policy, then in the terminal you run
+ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+
 # Install packages
 uv pip install openai-agents sendgrid python-dotenv pydantic
 
