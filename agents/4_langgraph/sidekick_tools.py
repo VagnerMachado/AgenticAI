@@ -18,19 +18,20 @@ pushover_user = os.getenv("PUSHOVER_USER")
 pushover_url = "https://api.pushover.net/1/messages.json"
 serper = GoogleSerperAPIWrapper()
 
+# Playwright browser tools for web browsing
 async def playwright_tools():
     playwright = await async_playwright().start()
     browser = await playwright.chromium.launch(headless=False)
     toolkit = PlayWrightBrowserToolkit.from_browser(async_browser=browser)
     return toolkit.get_tools(), browser, playwright
 
-
+# Tool to send push notifications
 def push(text: str):
     """Send a push notification to the user"""
     requests.post(pushover_url, data = {"token": pushover_token, "user": pushover_user, "message": text})
     return "success"
 
-
+#quick file management tools in a sandboxed folder for safety
 def get_file_tools():
     toolkit = FileManagementToolkit(root_dir="sandbox")
     return toolkit.get_tools()
@@ -49,6 +50,7 @@ async def other_tools():
     wikipedia = WikipediaAPIWrapper()
     wiki_tool = WikipediaQueryRun(api_wrapper=wikipedia)
 
+#    python_repl  is used for exe python commands via shell
     python_repl = PythonREPLTool()
     
     return file_tools + [push_tool, tool_search, python_repl,  wiki_tool]
