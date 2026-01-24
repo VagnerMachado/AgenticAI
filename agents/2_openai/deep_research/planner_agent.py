@@ -4,7 +4,7 @@ from agents import Agent
 # --- Constants and Instructions ---
 
 # Define the number of web searches the planner should generate.
-HOW_MANY_SEARCHES = 5
+HOW_MANY_SEARCHES = 10
 
 # Define the system instructions for the planner agent.
 # This guides the LLM's behavior, telling it to act as a research assistant
