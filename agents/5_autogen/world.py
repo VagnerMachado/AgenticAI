@@ -5,8 +5,9 @@ from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
 from autogen_core import AgentId
 import messages
 import asyncio
+from dotenv import load_dotenv   
 
-HOW_MANY_AGENTS = 20
+HOW_MANY_AGENTS = 5
 
 async def create_and_message(worker, creator_id, i: int):
     try:
@@ -35,6 +36,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    load_dotenv()
     asyncio.run(main())
 
 
